@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with AIMLAPI Bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f9;
+    }
+    #chatbox {
+      width: 80%;
+      max-width: 600px;
+      height: 60vh;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    #chatbox div {
+      margin: 5px 0;
+    }
+    .user {
+      text-align: right;
+      color: blue;
+    }
+    .bot {
+      text-align: left;
+      color: green;
+    }
+    #inputArea {
+      display: flex;
+      width: 80%;
+      max-width: 600px;
+    }
+    #userInput {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    #sendButton {
+      padding: 10px;
+      margin-left: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Chat with AIMLAPI Bot</h1>
+<div id="chatbox"></div>
+<div id="inputArea">
+  <input type="text" id="userInput" placeholder="Type your message...">
+  <button id="sendButton">Send</button>
+</div>
+
+<script>
+  const chatbox = document.getElementById('chatbox');
+  const userInput = document.getElementById('userInput');
+  const sendButton = document.getElementById('sendButton');
+  
+  const apiKey = "185043d0350b45118e0dd10c8b1c6c5f";  // Replace with your AIMLAPI API key
+  const apiUrl = "https://api.aimlapi.com/v1/chat";
+
+  function addMessageToChatbox(message, sender) {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add(sender);
+    messageElement.textContent = message;
+    chatbox.appendChild(messageElement);
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const message = userInput.value;
+    if (!message) return;
+
+    addMessageToChatbox(message, 'user');
+    userInput.value = '';
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await response.json();
+      const botReply = data.reply || "I'm sorry, I couldn't understand that.";
+      addMessageToChatbox(botReply, 'bot');
+
+    } catch (error) {
+      addMessageToChatbox("Error communicating with the bot. Please try again.", 'bot');
+      console.error("Error:", error);
+    }
+  }
+
+  sendButton.addEventListener('click', sendMessage);
+
+  userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+</script>
+
+</body>
+</html>
