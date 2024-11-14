@@ -8,10 +8,13 @@
     body {
       font-family: Arial, sans-serif;
       direction: rtl;
-      text-align: right;
       background-color: #f4f4f9;
       margin: 0;
       padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #4CAF50;
     }
     #textArea {
       width: 100%;
@@ -32,11 +35,30 @@
     }
     #resultBox {
       margin-top: 20px;
-      padding: 10px;
+      padding: 15px;
       border-radius: 8px;
       border: 1px solid #ccc;
       background-color: #fff;
       white-space: pre-wrap;
+      line-height: 1.6;
+    }
+    #resultBox h3 {
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    #resultBox p {
+      margin: 10px 0;
+    }
+    #resultBox ul {
+      list-style-type: disc;
+      padding-right: 20px;
+      margin: 10px 0;
+    }
+    #resultBox ul li {
+      margin-bottom: 5px;
+    }
+    .loading {
+      color: #999;
     }
   </style>
 </head>
@@ -59,12 +81,12 @@
     }
 
     // הצגת הודעת המתנה
-    document.getElementById('resultBox').textContent = "מבצע ניתוח, נא להמתין...";
+    document.getElementById('resultBox').innerHTML = "<p class='loading'>מבצע ניתוח, נא להמתין...</p>";
 
     const payload = {
       model: "jamba-1.5-large",
       messages: [
-        { role: "user", content: "שלום, אני מעוניין בניתוח תמות מתוך הראיון הבא:" },
+        { role: "user", content: "שלום, אני מעוניין בניתוח תמות מתוך הראיון הבא. עבור כל תמה תצרף ציטוטים תומכים ותדייק בציטוט:" },
         { role: "user", content: text }
       ],
       max_tokens: 2048,
@@ -89,7 +111,9 @@
 
       const data = await response.json();
       const analysis = data.choices[0].message.content.trim();
-      document.getElementById('resultBox').textContent = analysis;
+
+      // עיצוב התוצאה
+      document.getElementById('resultBox').innerHTML = `<h3>תוצאות ניתוח התמות:</h3><p>${analysis.replace(/\n/g, '<br>')}</p>`;
 
     } catch (error) {
       document.getElementById('resultBox').textContent = "שגיאה בניתוח התמות. נסה שוב מאוחר יותר.";
