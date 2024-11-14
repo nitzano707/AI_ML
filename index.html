@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ניתוח תמות של ראיון</title>
+  <title>ניתוח תמות של ראיון לפי הנחיות RAG</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -47,7 +47,7 @@
     .user {
       color: blue;
     }
-    .bot {
+    .assistant {
       color: green;
     }
   </style>
@@ -56,7 +56,7 @@
 
 <h1>ניתוח תמות של ראיון לפי הנחיות RAG</h1>
 <div id="chatbox"></div>
-<textarea id="userInput" placeholder="הקלד כאן את ההודעה שלך..."></textarea>
+<textarea id="userInput" placeholder="הקלד כאן את טקסט הראיון..."></textarea>
 <button id="sendButton">שלח</button>
 
 <script>
@@ -67,25 +67,18 @@
   const apiKey = "EAhZMlk3stvI1oCUymgBDaTBJ6cZ7f7m"; // הכנס את מפתח ה-API שלך כאן
   const fileId = "35c8b109-b47d-462f-8394-9d14bbdd38ed"; // מזהה הקובץ שלך
 
+  let currentStep = 0; // מעקב אחרי הצעד הנוכחי
+
   function addMessage(content, sender) {
     const message = document.createElement('div');
-    message.classList.add('message');
-    message.classList.add(sender);
+    message.classList.add('message', sender);
     message.textContent = content;
     chatbox.appendChild(message);
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
-  async function sendMessage() {
-    const userText = userInput.value.trim();
-    if (!userText) return;
-
-    addMessage(userText, 'user');
-    userInput.value = '';
-
-    const messages = [
-      { role: "user", content: userText }
-    ];
+  async function sendMessage(content) {
+    const messages = [{ role: "user", content }];
 
     try {
       const response = await fetch(apiUrl, {
@@ -95,12 +88,12 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          "messages": messages,
-          "file_ids": [fileId],
-          "max_segments": 15,
-          "retrieval_strategy": "segments",
-          "retrieval_similarity_threshold": 0.8,
-          "max_neighbors": 3
+          messages: messages,
+          file_ids: [fileId],
+          max_segments: 15,
+          retrieval_strategy: "segments",
+          retrieval_similarity_threshold: 0.8,
+          max_neighbors: 1
         })
       });
 
@@ -109,20 +102,62 @@
       }
 
       const data = await response.json();
-      const botReply = data.messages && data.messages.length > 0 ? data.messages[0].content : "לא התקבלה תגובה מהשרת.";
-      addMessage(botReply, 'bot');
+      const assistantMessage = data.messages && data.messages.length > 0 ? data.messages[0].content : "לא התקבלה תשובה תקינה מהשרת.";
+      addMessage(assistantMessage, 'assistant');
 
+      return assistantMessage;
     } catch (error) {
-      addMessage("שגיאה בתקשורת עם השרת, נסה שוב מאוחר יותר.", 'bot');
+      addMessage("אירעה שגיאה בעת שליחת הבקשה. נסה שוב מאוחר יותר.", 'assistant');
       console.error("Error:", error);
+      return null;
     }
   }
 
-  sendButton.addEventListener('click', sendMessage);
+  async function startAnalysis() {
+    if (currentStep === 0) {
+      addMessage("אנא הכנס את טקסט הראיון לביצוע הניתוח.", 'assistant');
+      currentStep++;
+    } else {
+      const userText = userInput.value.trim();
+      if (!userText && currentStep === 1) {
+        addMessage("אנא הכנס את טקסט הראיון.", 'assistant');
+        return;
+      }
+
+      if (currentStep === 1) {
+        addMessage(userText, 'user');
+        userInput.value = '';
+        currentStep++;
+        const assistantReply = await sendMessage("בצע את הצעד הראשון בניתוח לפי ההנחיות בקובץ.");
+
+        if (assistantReply) {
+          addMessage("האם להמשיך לצעד הבא או לעדכן את הטקסט?", 'assistant');
+        }
+      } else {
+        const userDecision = userInput.value.trim();
+        userInput.value = '';
+
+        if (userDecision.includes("להמשיך")) {
+          currentStep++;
+          const assistantReply = await sendMessage(`בצע את הצעד ${currentStep} בניתוח לפי ההנחיות בקובץ.`);
+          if (assistantReply) {
+            addMessage("האם להמשיך לצעד הבא או לעדכן את הטקסט?", 'assistant');
+          }
+        } else if (userDecision.includes("לעדכן")) {
+          addMessage("אנא עדכן את טקסט הראיון והזן אותו שוב.", 'assistant');
+          currentStep = 1; // חזרה להזנת הטקסט
+        } else {
+          addMessage("לא הבנתי את ההנחיה. אנא כתוב 'להמשיך' או 'לעדכן'.", 'assistant');
+        }
+      }
+    }
+  }
+
+  sendButton.addEventListener('click', startAnalysis);
   userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      startAnalysis();
     }
   });
 </script>
