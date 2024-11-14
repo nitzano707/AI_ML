@@ -68,6 +68,7 @@
   const fileId = "35c8b109-b47d-462f-8394-9d14bbdd38ed"; // מזהה הקובץ שלך
 
   let currentStep = 0; // מעקב אחרי הצעד הנוכחי
+  let userText = ""; // משתנה לשמירת טקסט הראיון
 
   function addMessage(content, sender) {
     const message = document.createElement('div');
@@ -77,7 +78,7 @@
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
-  async function sendMessage(content) {
+  async function sendStepMessage(content) {
     const messages = [{ role: "user", content }];
 
     try {
@@ -117,38 +118,34 @@
     if (currentStep === 0) {
       addMessage("אנא הכנס את טקסט הראיון לביצוע הניתוח.", 'assistant');
       currentStep++;
-    } else {
-      const userText = userInput.value.trim();
-      if (!userText && currentStep === 1) {
+    } else if (currentStep === 1) {
+      userText = userInput.value.trim();
+      if (!userText) {
         addMessage("אנא הכנס את טקסט הראיון.", 'assistant');
         return;
       }
+      addMessage(userText, 'user');
+      userInput.value = '';
+      currentStep++;
+      const assistantReply = await sendStepMessage("בצע את הצעד הראשון בניתוח לפי ההנחיות בקובץ.");
+      if (assistantReply) {
+        addMessage("האם להמשיך לצעד הבא או לעדכן את הטקסט?", 'assistant');
+      }
+    } else {
+      const userDecision = userInput.value.trim();
+      userInput.value = '';
 
-      if (currentStep === 1) {
-        addMessage(userText, 'user');
-        userInput.value = '';
+      if (userDecision.includes("להמשיך")) {
         currentStep++;
-        const assistantReply = await sendMessage("בצע את הצעד הראשון בניתוח לפי ההנחיות בקובץ.");
-
+        const assistantReply = await sendStepMessage(`בצע את הצעד ${currentStep} בניתוח לפי ההנחיות בקובץ.`);
         if (assistantReply) {
           addMessage("האם להמשיך לצעד הבא או לעדכן את הטקסט?", 'assistant');
         }
+      } else if (userDecision.includes("לעדכן")) {
+        addMessage("אנא עדכן את טקסט הראיון והזן אותו שוב.", 'assistant');
+        currentStep = 1; // חזרה להזנת הטקסט מחדש
       } else {
-        const userDecision = userInput.value.trim();
-        userInput.value = '';
-
-        if (userDecision.includes("להמשיך")) {
-          currentStep++;
-          const assistantReply = await sendMessage(`בצע את הצעד ${currentStep} בניתוח לפי ההנחיות בקובץ.`);
-          if (assistantReply) {
-            addMessage("האם להמשיך לצעד הבא או לעדכן את הטקסט?", 'assistant');
-          }
-        } else if (userDecision.includes("לעדכן")) {
-          addMessage("אנא עדכן את טקסט הראיון והזן אותו שוב.", 'assistant');
-          currentStep = 1; // חזרה להזנת הטקסט
-        } else {
-          addMessage("לא הבנתי את ההנחיה. אנא כתוב 'להמשיך' או 'לעדכן'.", 'assistant');
-        }
+        addMessage("לא הבנתי את ההנחיה. אנא כתוב 'להמשיך' או 'לעדכן'.", 'assistant');
       }
     }
   }
