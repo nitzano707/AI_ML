@@ -109,7 +109,7 @@
       }
 
       const data = await response.json();
-      const botReply = data.messages[0].content;
+      const botReply = data.messages && data.messages.length > 0 ? data.messages[0].content : "לא התקבלה תגובה מהשרת.";
       addMessage(botReply, 'bot');
 
     } catch (error) {
