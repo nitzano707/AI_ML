@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>שיח עם הבוט של AIMLAPI</title>
+  <title>ניתוח תמות מתוך ראיון</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,95 +13,72 @@
       margin: 0;
       padding: 20px;
     }
-    #chatbox {
+    #textArea {
       width: 100%;
-      max-width: 600px;
-      height: 400px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
+      height: 300px;
       padding: 10px;
-      background-color: #fff;
       border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    #chatbox div {
-      margin: 5px 0;
-    }
-    .user {
-      text-align: right;
-      color: blue;
-    }
-    .bot {
-      text-align: left;
-      color: green;
-    }
-    #inputArea {
-      display: flex;
-      width: 100%;
-      max-width: 600px;
-    }
-    #userInput {
-      flex-grow: 1;
-      padding: 10px;
-      border-radius: 4px;
       border: 1px solid #ccc;
+      resize: vertical;
     }
-    #sendButton {
-      padding: 10px;
-      margin-left: 5px;
+    #analyzeButton {
+      padding: 10px 20px;
+      margin-top: 10px;
       background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
     }
+    #resultBox {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
 
-<h1>שיח עם הבוט של AIMLAPI</h1>
-<div id="chatbox"></div>
-<div id="inputArea">
-  <input type="text" id="userInput" placeholder="הקלד את ההודעה שלך...">
-  <button id="sendButton">שלח</button>
-</div>
+<h1>ניתוח תמות מתוך ראיון</h1>
+<textarea id="textArea" placeholder="הדבק כאן את תמלול הראיון..."></textarea>
+<button id="analyzeButton">נתח תמות</button>
+<div id="resultBox"></div>
 
 <script>
-  const chatbox = document.getElementById('chatbox');
-  const userInput = document.getElementById('userInput');
-  const sendButton = document.getElementById('sendButton');
-  
-  const apiKey = '185043d0350b45118e0dd10c8b1c6c5f';  // החלף במפתח ה-API שלך
-  const apiUrl = 'https://api.aimlapi.com/v1/chat/completions';
+  const apiKey = 'EAhZMlk3stvI1oCUymgBDaTBJ6cZ7f7m'; // החלף במפתח ה-API שלך
+  const apiUrl = 'https://api.ai21.com/studio/v1/chat/completions';
 
-  function addMessageToChatbox(message, sender) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add(sender);
-    messageElement.textContent = message;
-    chatbox.appendChild(messageElement);
-    chatbox.scrollTop = chatbox.scrollHeight;
-  }
+  document.getElementById('analyzeButton').addEventListener('click', async () => {
+    const text = document.getElementById('textArea').value.trim();
+    if (!text) {
+      alert("נא להדביק תמלול בתיבת הטקסט.");
+      return;
+    }
 
-  async function sendMessage() {
-    const message = userInput.value.trim();
-    if (!message) return;
-
-    addMessageToChatbox(message, 'user');
-    userInput.value = '';
+    // הצגת הודעת המתנה
+    document.getElementById('resultBox').textContent = "מבצע ניתוח, נא להמתין...";
 
     const payload = {
-      model: 'gpt-3.5-turbo',
+      model: "jamba-1.5-large",
       messages: [
-        { role: 'user', content: message }
-      ]
+        { role: "user", content: "שלום, אני מעוניין בניתוח תמות מתוך הראיון הבא:" },
+        { role: "user", content: text }
+      ],
+      max_tokens: 2048,
+      temperature: 0.4,
+      top_p: 1,
+      n: 1,
     };
 
     try {
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
       });
@@ -111,20 +88,12 @@
       }
 
       const data = await response.json();
-      const botReply = data.choices[0].message.content.trim();
-      addMessageToChatbox(botReply, 'bot');
+      const analysis = data.choices[0].message.content.trim();
+      document.getElementById('resultBox').textContent = analysis;
 
     } catch (error) {
-      addMessageToChatbox('שגיאה בתקשורת עם הבוט. נסה שוב מאוחר יותר.', 'bot');
-      console.error('Error:', error);
-    }
-  }
-
-  sendButton.addEventListener('click', sendMessage);
-
-  userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
+      document.getElementById('resultBox').textContent = "שגיאה בניתוח התמות. נסה שוב מאוחר יותר.";
+      console.error("Error:", error);
     }
   });
 </script>
