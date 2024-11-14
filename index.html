@@ -1,24 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat with AIMLAPI Bot</title>
+  <title>שיח עם הבוט של AIMLAPI</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      direction: rtl;
+      text-align: right;
       background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
     }
     #chatbox {
-      width: 80%;
+      width: 100%;
       max-width: 600px;
-      height: 60vh;
+      height: 400px;
       overflow-y: auto;
       border: 1px solid #ccc;
       padding: 10px;
@@ -39,11 +37,11 @@
     }
     #inputArea {
       display: flex;
-      width: 80%;
+      width: 100%;
       max-width: 600px;
     }
     #userInput {
-      width: 100%;
+      flex-grow: 1;
       padding: 10px;
       border-radius: 4px;
       border: 1px solid #ccc;
@@ -61,11 +59,11 @@
 </head>
 <body>
 
-<h1>Chat with AIMLAPI Bot</h1>
+<h1>שיח עם הבוט של AIMLAPI</h1>
 <div id="chatbox"></div>
 <div id="inputArea">
-  <input type="text" id="userInput" placeholder="Type your message...">
-  <button id="sendButton">Send</button>
+  <input type="text" id="userInput" placeholder="הקלד את ההודעה שלך...">
+  <button id="sendButton">שלח</button>
 </div>
 
 <script>
@@ -73,8 +71,8 @@
   const userInput = document.getElementById('userInput');
   const sendButton = document.getElementById('sendButton');
   
-  const apiKey = "185043d0350b45118e0dd10c8b1c6c5f";  // Replace with your AIMLAPI API key
-  const apiUrl = "https://api.aimlapi.com/v1/chat";
+  const apiKey = "185043d0350b45118e0dd10c8b1c6c5f";  // החלף במפתח ה-API שלך
+  const apiUrl = "https://api.aimlapi.com/v1/chat/completions";
 
   function addMessageToChatbox(message, sender) {
     const messageElement = document.createElement('div');
@@ -85,11 +83,18 @@
   }
 
   async function sendMessage() {
-    const message = userInput.value;
+    const message = userInput.value.trim();
     if (!message) return;
 
     addMessageToChatbox(message, 'user');
     userInput.value = '';
+
+    const payload = {
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "user", content: message }
+      ]
+    };
 
     try {
       const response = await fetch(apiUrl, {
@@ -98,15 +103,19 @@
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify(payload)
       });
 
+      if (!response.ok) {
+        throw new Error(`שגיאה: ${response.status} ${response.statusText}`);
+      }
+
       const data = await response.json();
-      const botReply = data.reply || "I'm sorry, I couldn't understand that.";
+      const botReply = data.choices[0].message.content.trim();
       addMessageToChatbox(botReply, 'bot');
 
     } catch (error) {
-      addMessageToChatbox("Error communicating with the bot. Please try again.", 'bot');
+      addMessageToChatbox("שגיאה בתקשורת עם הבוט. נסה שוב מאוחר יותר.", 'bot');
       console.error("Error:", error);
     }
   }
