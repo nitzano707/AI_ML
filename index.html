@@ -71,8 +71,8 @@
   const userInput = document.getElementById('userInput');
   const sendButton = document.getElementById('sendButton');
   
-  const apiKey = "185043d0350b45118e0dd10c8b1c6c5f";  // החלף במפתח ה-API שלך
-  const apiUrl = "https://api.aimlapi.com/v1/chat/completions";
+  const apiKey = '185043d0350b45118e0dd10c8b1c6c5f';  // החלף במפתח ה-API שלך
+  const apiUrl = 'https://api.aimlapi.com/v1/chat/completions';
 
   function addMessageToChatbox(message, sender) {
     const messageElement = document.createElement('div');
@@ -90,9 +90,9 @@
     userInput.value = '';
 
     const payload = {
-      model: "gpt-3.5-turbo",
+      model: 'gpt-3.5-turbo',
       messages: [
-        { role: "user", content: message }
+        { role: 'user', content: message }
       ]
     };
 
@@ -115,8 +115,8 @@
       addMessageToChatbox(botReply, 'bot');
 
     } catch (error) {
-      addMessageToChatbox("שגיאה בתקשורת עם הבוט. נסה שוב מאוחר יותר.", 'bot');
-      console.error("Error:", error);
+      addMessageToChatbox('שגיאה בתקשורת עם הבוט. נסה שוב מאוחר יותר.', 'bot');
+      console.error('Error:', error);
     }
   }
 
